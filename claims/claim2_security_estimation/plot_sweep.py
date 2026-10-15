@@ -39,8 +39,16 @@ a.axhline(TARGET, color="#d62728", linestyle="--", linewidth=1.5,
 if MLWE_QUANTUM:
     a.axhline(MLWE_QUANTUM, color="#7f7f7f", linestyle="-.", linewidth=1.5,
               label="MLWE quantum (%.1f)" % MLWE_QUANTUM)
-a.axvline(HIGHLIGHT, color="#d62728", linestyle="--", linewidth=1.5,
+a.axvline(HIGHLIGHT, color="#2ca02c", linestyle="--", linewidth=1.5,
           label="chosen bound = %d" % HIGHLIGHT)
+a.plot(HIGHLIGHT, h[1], "*", color="#1f77b4", markersize=15, zorder=5)
+a.annotate("%.1f bits" % h[1], (HIGHLIGHT, h[1]), textcoords="offset points",
+           xytext=(10, 2), fontsize=10, color="#1f77b4", fontweight="bold",
+           bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
+a.plot(HIGHLIGHT, h[2], "*", color="#ff7f0e", markersize=15, zorder=5)
+a.annotate("%.1f bits" % h[2], (HIGHLIGHT, h[2]), textcoords="offset points",
+           xytext=(10, -16), fontsize=10, color="#ff7f0e", fontweight="bold",
+           bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
 a.set_xlabel("length_bound (norm = infinity)", fontsize=12)
 a.set_ylabel("Estimator-reported attack cost (bits)", fontsize=12)
 a.set_title("(A) Security Level vs length_bound", fontsize=13)
@@ -49,8 +57,11 @@ a.legend(fontsize=9, loc="upper right", framealpha=0.9)
 a.grid(alpha=0.3)
 
 b.plot(xs, bkz, "o-", color="#d62728", linewidth=2, markersize=6)
-b.axvline(HIGHLIGHT, color="#d62728", linestyle="--", linewidth=1.5,
+b.axvline(HIGHLIGHT, color="#2ca02c", linestyle="--", linewidth=1.5,
           label="chosen bound = %d" % HIGHLIGHT)
+b.plot(HIGHLIGHT, h[3], "*", color="#2ca02c", markersize=15, zorder=5)
+b.annotate("beta = %d" % h[3], (HIGHLIGHT, h[3]), textcoords="offset points",
+           xytext=(10, 2), fontsize=10, color="#2ca02c", fontweight="bold")
 b.set_xlabel("length_bound (norm = infinity)", fontsize=12)
 b.set_ylabel("BKZ block size beta", fontsize=12)
 b.set_title("(B) Required BKZ-beta vs length_bound", fontsize=13)
