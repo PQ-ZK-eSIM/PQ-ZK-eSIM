@@ -100,17 +100,21 @@ def plot_sparse_noise_attack():
 
     rho = df["rho"].values * 100
 
+    # Panel (A) plots the recorded multi-norm rejection rate. The detection_rate
+    # column counts a trial as rejected if any of the four norm checks fires
+    # (ell_2 lower, ell_2 upper, ell_inf, ell_1 lower).
     ax = axes[0]
     colors_a = ['#d62728' if r < 100 else '#2ca02c' for r in rho]
     bars = ax.bar(rho, df["detection_rate"] * 100, color=colors_a,
                   width=8, alpha=0.85, edgecolor='white', linewidth=2)
     for bar, v in zip(bars, df["detection_rate"] * 100):
+        vlabel = f'{v:.1f}%' if abs(v - round(v)) > 1e-6 else f'{v:.0f}%'
         ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2,
-                f'{v:.0f}%', ha='center', va='bottom', 
+                vlabel, ha='center', va='bottom',
                 fontsize=32, fontweight='bold', color='black')
     ax.axhline(y=99, color='#1f77b4', linestyle='--', linewidth=3)
-    ax.set_xlabel("Non-zero coefficient ratio ρ (%)", fontsize=42)
-    ax.set_ylabel("L1 Check Detection Rate (%)", fontsize=42)
+    ax.set_xlabel("Sparsification setting ρ (%)", fontsize=42)
+    ax.set_ylabel("Norm Rejection Rate (%)", fontsize=42)
     ax.set_title("(A) Attack Detection Rate vs ρ", fontsize=44, pad=5)
     ax.set_ylim(0, 108)
     ax.set_xticks(rho)
@@ -122,7 +126,10 @@ def plot_sparse_noise_attack():
         false_reject = df[honest_mask]["false_reject_rate"].values[0] * 100
         ax.bar([0], [false_reject],
                color='#2ca02c', alpha=0.85, width=0.6, edgecolor='white', linewidth=2)
-        ax.text(0, false_reject + 0.3, f'{false_reject:.2f}%\n(0 observed)',
+        frr_label = f'{false_reject:.2f}%'
+        if abs(false_reject) < 1e-9:
+            frr_label += '\n(0 observed)'
+        ax.text(0, false_reject + 0.3, frr_label,
                 ha='center', fontsize=34, fontweight='bold')
     ax.set_ylabel("False Rejection Rate (%)", fontsize=42)
     ax.set_title("(B) Honest Authentication\nFalse Rejection Rate", fontsize=44, pad=5)
@@ -133,9 +140,9 @@ def plot_sparse_noise_attack():
     ax = axes[2]
     ax.plot(rho, df["avg_total_us"] / 1000, 'o-',
             color='#1f77b4', linewidth=4, markersize=16)
-    ax.set_xlabel("Non-zero coefficient ratio ρ (%)", fontsize=42)
-    ax.set_ylabel("End-to-End Latency (ms)", fontsize=42)
-    ax.set_title("(C) End-to-End Latency vs ρ", fontsize=44, pad=5)
+    ax.set_xlabel("Sparsification setting ρ (%)", fontsize=42)
+    ax.set_ylabel("Aggregation + Verification Latency (ms)", fontsize=42)
+    ax.set_title("(C) Aggregation + Verification Latency vs ρ", fontsize=44, pad=5)
     ax.set_xticks(rho)
     ax.tick_params(axis='both', labelsize=38)
 
@@ -172,9 +179,15 @@ def plot_sliding_window_resync():
             if not row.empty:
                 matrix[i, j] = row["success_rate"].values[0] * 100
 
-    im = ax_a.imshow(matrix, aspect='auto', cmap='RdYlGn',
-                     vmin=0, vmax=100,
-                     extent=[-0.5, len(depths)-0.5, len(windows)-0.5, -0.5])
+    # pcolormesh draws the cells as vector rectangles, so the heatmap stays
+    # correct in the PDF and SVG output. imshow embeds a low-resolution raster
+    # (the 6x8 matrix itself), which a PDF viewer resamples into moire stripes.
+    im = ax_a.pcolormesh(np.arange(-0.5, len(depths) + 0.5),
+                         np.arange(-0.5, len(windows) + 0.5),
+                         matrix, cmap='RdYlGn', vmin=0, vmax=100,
+                         edgecolors='none', linewidth=0, shading='flat')
+    ax_a.set_xlim(-0.5, len(depths) - 0.5)
+    ax_a.set_ylim(len(windows) - 0.5, -0.5)
     cb = plt.colorbar(im, ax=ax_a, label='Success Rate (%)')
     cb.ax.tick_params(labelsize=32)
     cb.set_label('Success Rate (%)', fontsize=38)
@@ -241,8 +254,8 @@ def plot_sliding_window_resync():
                             label='Sync success zone')
 
     ax_c.set_xlabel("Sync Depth Δ", fontsize=42)
-    ax_c.set_ylabel("Total Latency (ms)", fontsize=42)
-    ax_c.set_title(f"(C) Total Latency vs Sync Depth\n(W={w_target})", fontsize=44)
+    ax_c.set_ylabel("Post-precomputation Latency (ms)", fontsize=42)
+    ax_c.set_title(f"(C) Post-precomputation Latency vs Sync Depth\n(W={w_target})", fontsize=44)
     ax_c.legend(fontsize=38)
     ax_c.tick_params(axis='both', labelsize=38)
 
@@ -442,8 +455,8 @@ def plot_phase_timing():
         print(f"  [Warning] phase_timing CSV missing: {missing}")
         return
 
-    fig = plt.figure(figsize=(72, 40))
-    fig.suptitle("Per-Phase Timing Analysis", fontweight='bold', fontsize=120, y=0.985)
+    fig = plt.figure(figsize=(18, 10))
+    fig.suptitle("Per-Phase Timing Analysis", fontweight='bold', fontsize=30, y=0.985)
     gs = GridSpec(2, 2, figure=fig, hspace=0.5, wspace=0.35)
 
     ax_a = fig.add_subplot(gs[0, :])
@@ -451,19 +464,19 @@ def plot_phase_timing():
     stds = df[phase_cols].std()
     colors_bar = [entity_colors[c] for c in phase_cols]
     
-    bars = ax_a.bar(range(len(phase_cols)), means, yerr=stds, capsize=30,
+    bars = ax_a.bar(range(len(phase_cols)), means, yerr=stds, capsize=8,
                     color=colors_bar, alpha=0.85, edgecolor='white', width=0.7)
     
     for bar, m, s in zip(bars, means, stds):
         ax_a.text(bar.get_x() + bar.get_width()/2,
                   bar.get_height() + s + max(means)*0.02,
-                  f'{m:.0f}μs', ha='center', va='bottom', fontsize=90, fontweight='bold')
+                  f'{m:.0f}μs', ha='center', va='bottom', fontsize=22, fontweight='bold')
     
     ax_a.set_xticks(range(len(phase_cols)))
-    ax_a.set_xticklabels(phase_names, rotation=0, ha='center', fontsize=48)
-    ax_a.set_ylabel("Time (μs)", fontsize=102)
-    ax_a.set_title("(A) Per-Phase Latency (mean ± std)", fontsize=95, fontweight='bold', pad=15)
-    ax_a.tick_params(axis='y', labelsize=86)
+    ax_a.set_xticklabels(phase_names, rotation=0, ha='center', fontsize=12)
+    ax_a.set_ylabel("Time (μs)", fontsize=26)
+    ax_a.set_title("(A) Per-Phase Latency (mean ± std)", fontsize=24, fontweight='bold', pad=15)
+    ax_a.tick_params(axis='y', labelsize=22)
 
     legend_patches = [
         mpatches.Patch(color='#1f77b4', label='eUICC'),
@@ -472,24 +485,24 @@ def plot_phase_timing():
         mpatches.Patch(color='#2ca02c', label='Server'),
         mpatches.Patch(color='#9467bd', label='Shared'),
     ]
-    ax_a.legend(handles=legend_patches, fontsize=72, loc='upper right')
+    ax_a.legend(handles=legend_patches, fontsize=18, loc='upper right')
 
     ax_b = fig.add_subplot(gs[1, 0])
     data_for_box = [df[c].dropna().values for c in phase_cols]
     bp = ax_b.boxplot(data_for_box, patch_artist=True, notch=False,
-                      medianprops=dict(color='red', linewidth=8),
-                      flierprops=dict(marker='o', markerfacecolor='red', markersize=24, linestyle='none'))
+                      medianprops=dict(color='red', linewidth=2),
+                      flierprops=dict(marker='o', markerfacecolor='red', markersize=6, linestyle='none'))
     
     for patch, color in zip(bp['boxes'], colors_bar):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
     
     ax_b.set_xticks(range(1, len(phase_names)+1))
-    ax_b.set_xticklabels(phase_names, rotation=0, ha='center', fontsize=48)
-    ax_b.set_ylabel("Time (μs)", fontsize=92)
-    ax_b.set_title("(B) Per-Phase Latency Distribution", fontsize=85, fontweight='bold', pad=15)
-    ax_b.legend([mpatches.Patch(color='red', alpha=0.5)], ['Outliers'], fontsize=72, loc='upper right')
-    ax_b.tick_params(axis='y', labelsize=72)
+    ax_b.set_xticklabels(phase_names, rotation=30, ha='right', fontsize=9)
+    ax_b.set_ylabel("Time (μs)", fontsize=23)
+    ax_b.set_title("(B) Per-Phase Latency Distribution", fontsize=21, fontweight='bold', pad=15)
+    ax_b.legend([mpatches.Patch(color='red', alpha=0.5)], ['Outliers'], fontsize=18, loc='upper right')
+    ax_b.tick_params(axis='y', labelsize=18)
     
     all_data = np.concatenate(data_for_box)
     q1 = np.percentile(all_data, 25)
@@ -519,18 +532,18 @@ def plot_phase_timing():
         filtered_total = total
         filtered_indices = np.arange(len(total))
     
-    ax_c.plot(filtered_indices, filtered_total, alpha=0.7, color='#2c3e50', linewidth=6, marker='o', markersize=16)
+    ax_c.plot(filtered_indices, filtered_total, alpha=0.7, color='#2c3e50', linewidth=1.5, marker='o', markersize=4)
     ax_c.axhline(y=np.mean(filtered_total), color='red', linestyle='--',
-                 linewidth=6, label=f'Mean: {np.mean(filtered_total):.0f}μs')
+                 linewidth=1.5, label=f'Mean: {np.mean(filtered_total):.0f}μs')
     ax_c.fill_between(filtered_indices,
                       np.mean(filtered_total) - np.std(filtered_total),
                       np.mean(filtered_total) + np.std(filtered_total),
                       alpha=0.15, color='red', label='±1σ')
-    ax_c.set_xlabel("Trial", fontsize=82)
-    ax_c.set_ylabel("Total Time (μs)", fontsize=82)
-    ax_c.set_title("(C) End-to-End Latency\nTime Series", fontsize=80, fontweight='bold', pad=15)
-    ax_c.legend(fontsize=68)
-    ax_c.tick_params(axis='both', labelsize=72)
+    ax_c.set_xlabel("Trial", fontsize=20)
+    ax_c.set_ylabel("Total Time (μs)", fontsize=20)
+    ax_c.set_title("(C) Summed Phase Latency\nTime Series", fontsize=20, fontweight='bold', pad=15)
+    ax_c.legend(fontsize=17)
+    ax_c.tick_params(axis='both', labelsize=18)
     
     t_min = max(0, filtered_total.min() * 0.9)
     t_max = filtered_total.max() * 1.1
@@ -646,7 +659,7 @@ def plot_dos_prevention():
     ax.set_yticks(y_pos)
     ax.set_yticklabels(tests, fontsize=20)
     ax.set_xlabel('Execution Time (μs)', fontsize=22)
-    ax.set_title('DoS Prevention: Verification Time Comparison', fontsize=26, fontweight='bold')
+    ax.set_title('MAC and Lattice Verification Costs', fontsize=26, fontweight='bold')
     ax.set_xscale('log')
 
     for i, v in enumerate(times):
@@ -654,7 +667,7 @@ def plot_dos_prevention():
 
     if len(times) == 2:
         speedup = times[1] / times[0]
-        ax.text(0.5, -0.15, f'Speedup: {speedup:.1f}x faster', 
+        ax.text(0.5, -0.15, f'Cost ratio: {speedup:.1f}×',
                 ha='center', va='center', transform=ax.transAxes, 
                 fontweight='bold', color='#2196F3', fontsize=20)
 
