@@ -288,6 +288,8 @@ The concrete lattice numbers reported in this artifact are known-attack estimate
 
 The QEMU measurements are software workload measurements under AArch64 emulation. They are not measurements from a commercial eUICC or TrustZone device.
 
+The eUICC commit and response/mask phases fsync the NVRAM file inside the timed region, so those two phase times depend on the host storage and a slow disk can dominate the measured total. Placing the state directory on tmpfs separates the computation from storage time; compare a run on tmpfs with the same run on disk to see the difference. Commercial-eUICC NVM latency is not measured.
+
 The approximately 4.2 ms eUICC value in the paper is an analytical dominant-cost projection with W_sec precomputed. It is not an end-to-end wall-clock measurement. The projection covers the dominant ternary challenge-response additions and the stated AES allowances. Auxiliary HKDF and KDF operations, challenge hashing, token verification, serialization, and NVM commit are outside that analytical subtotal.
 
 The projection is an operation-count model at a 33 MHz eUICC. Its inputs (the
@@ -341,7 +343,11 @@ The external network backend is not required for the reported artifact claims. A
 
 The evaluated C, QEMU, and Python components require no private hardware and can be exercised on a suitable Ubuntu x86_64 public compute instance.
 
-If the artifact is submitted from a mutable Git repository during evaluation, the final evaluated version should also be archived in a permanent public repository according to the ACSAC artifact-availability requirements.
+If the artifact is submitted from a mutable Git repository during evaluation, the final evaluated version is also archived in a permanent public repository according to the ACSAC artifact-availability requirements. The evaluated version is archived at Zenodo:
+
+  DOI       10.5281/zenodo.XXXXXXX
+  Record    https://doi.org/10.5281/zenodo.XXXXXXX
+  Version   acsac26-ae-final (commit 6ba303c)
 
 The public artifact includes the source code, experiment scripts, expected outputs, documentation, and configuration files needed to exercise the claims described above.
 
