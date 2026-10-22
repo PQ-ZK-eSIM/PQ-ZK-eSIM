@@ -21,7 +21,7 @@ remaining claims run offline.
 
   License      Apache-2.0 (license.txt). Third-party components and their
                licenses are listed in infrastructure/THIRD_PARTY.md.
-  Verified on  Ubuntu 24.04.4 LTS, 2 CPU cores, 3.8 GiB RAM, with gcc 9.5.0,
+  Verified on  Ubuntu 24.04.4 LTS, 2 CPU cores, 3.8 GiB RAM, with gcc 13.3.0,
                cmake 3.28.3, qemu-aarch64 8.2.2, python3 3.12.3,
                OpenSSL 3.0.13, liboqs 0.15.0, SageMath 10.8 (conda-forge).
 

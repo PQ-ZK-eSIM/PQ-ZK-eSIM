@@ -23,5 +23,5 @@ set(liboqs_DIR ${AARCH64_DEPS}/liboqs)
 set(CMAKE_C_FLAGS " -I${AARCH64_DEPS}/liboqs/include -I${AARCH64_DEPS}/openssl/include" CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS " -L${AARCH64_DEPS}/liboqs/lib -L${AARCH64_DEPS}/openssl/lib" CACHE STRING "" FORCE)
 
-# Use -O1 for QEMU compatibility
-set(CMAKE_C_FLAGS_RELEASE "-O1 -DNDEBUG" CACHE STRING "" FORCE)
+# Optimisation level is -O2, set in CMakeLists.txt (add_compile_options).
+set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG" CACHE STRING "" FORCE)

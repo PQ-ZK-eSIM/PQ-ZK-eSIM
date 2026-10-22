@@ -31,7 +31,12 @@ Measured per-phase means (us):
 
 Scope: QEMU ARM64 cryptographic-path timing; biometric capture/matching
 and network transit are excluded. The prototype's file-backed state updates
-are included in the software timing; commercial-eUICC NVM latency is not measured.
+are included in the software timing: the eUICC commit and response/mask
+phases fsync the NVRAM file inside the timed region, so those phase times
+depend on the host storage (a slow disk can dominate them). Commercial-eUICC
+NVM latency is not measured. For a storage-independent view of the
+computation, place the state directory on tmpfs and compare with the same
+run on disk.
 
 Analytical eUICC projection (separate model, not a measurement): 4.17 ms
 (4.2 ms rounded) dominant-cost projection with W_sec precomputed at 33 MHz

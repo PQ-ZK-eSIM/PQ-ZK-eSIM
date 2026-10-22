@@ -16,9 +16,9 @@
   now also collects `sparse_noise_norm_breakdown.csv` into `results/`, and the
   validator checks it. `detection_rate` in the main CSV is the union of the
   four checks (ell_2 lower bound, ell_2 upper bound, ell_infinity, ell_1 lower
-  bound); Figure 7A plots the ell_1 lower-bound rate specifically, which is
-  `l1_low_rate` in the breakdown file. Both the claim text and the README now
-  say so. The breakdown carries no stored reference value, because its
+  bound); Figure 7A plots this union rate (`detection_rate`). The breakdown
+  file records each check separately and carries no stored reference value,
+  because its
   rho = 0.90 row is in the transition band and legitimately varies between
   runs; it is judged against the acceptance rules stated in the claim's
   Tolerance section.

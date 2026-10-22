@@ -98,10 +98,11 @@ CLAIMS = {
             "grid": {"key": "rho",
                      "values": [0.0, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 1.0]},
         },
-        # Per-norm breakdown. Figure 7A plots the ell_1 lower-bound rate, which
-        # is l1_low_rate; detection_rate in the file above is the union of the
-        # ell_2-low, ell_2-high, ell_inf and ell_1 checks. The rho = 0.90 row
-        # sits in the transition band, so only the threshold rule is applied.
+        # Per-norm breakdown. Figure 7A plots the union detection_rate from the
+        # file above (the ell_2-low, ell_2-high, ell_inf and ell_1 checks OR-ed
+        # together); this file records each check separately, and its
+        # l1_low_rate column is held to the same threshold rule. The rho = 0.90
+        # row sits in the transition band, so only the threshold rule applies.
         "sparse_noise_norm_breakdown.csv": {
             "key": "rho",
             "rules_only": True,
