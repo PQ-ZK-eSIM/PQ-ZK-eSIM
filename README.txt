@@ -345,9 +345,9 @@ The evaluated C, QEMU, and Python components require no private hardware and can
 
 If the artifact is submitted from a mutable Git repository during evaluation, the final evaluated version is also archived in a permanent public repository according to the ACSAC artifact-availability requirements. The evaluated version is archived at Zenodo:
 
-  DOI       10.5281/zenodo.XXXXXXX
-  Record    https://doi.org/10.5281/zenodo.XXXXXXX
-  Version   acsac26-ae-final (commit 6ba303c)
+  DOI       10.5281/zenodo.23558778
+  Record    https://doi.org/10.5281/zenodo.23558778
+  Version   acsac26-ae-final (commit 7453a21)
 
 The public artifact includes the source code, experiment scripts, expected outputs, documentation, and configuration files needed to exercise the claims described above.
 
