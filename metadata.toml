@@ -1,6 +1,5 @@
 badge = "r"
 artifact_url = "https://github.com/PQ-ZK-eSIM/PQ-ZK-eSIM"
-doi = "10.5281/zenodo.23558778"
 cd = "c"
 citation = "@inproceedings{pqzkesim2026,\n  author    = {Liang Zhao and Shimiao Huang and Qianyu Xu and Xinyan Xie and Yixuan Chen and Yaxuan Hao and Liqun Chen},\n  title     = {PQ-ZK-eSIM: Post-Quantum Zero-Knowledge Identity Authentication for eSIM},\n  booktitle = {Annual Computer Security Applications Conference (ACSAC)},\n  year      = {2026}\n}"
 license_url = "https://www.apache.org/licenses/LICENSE-2.0"
