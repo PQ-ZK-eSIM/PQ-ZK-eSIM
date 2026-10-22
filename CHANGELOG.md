@@ -25,6 +25,10 @@
 - **Claim 5 claim text.** `rho` was described as the fraction of zeroed
   coefficients; it is the fraction *retained*. Corrected in the claim text to
   match the code and the README.
+- **KEM naming (documentation).** The operator-switching KEM is round-3
+  CRYSTALS-Kyber-768 (`OQS_KEM_alg_kyber_768`), matching the paper; it is not
+  FIPS 203 ML-KEM-768. The `pqzk_mlkem` source files keep that name but now
+  state this in their headers and in the README.
 - **Claim 2 setup (behavior).** `setup.sh` is self-contained and
   non-interactive: it reuses an existing SageMath when one is usable and
   otherwise bootstraps conda and installs SageMath from conda-forge only

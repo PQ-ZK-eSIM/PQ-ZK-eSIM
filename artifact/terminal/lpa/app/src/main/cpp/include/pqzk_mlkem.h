@@ -1,5 +1,7 @@
 /*
- * pqzk_mlkem.h — ML-KEM (CRYSTALS-Kyber-768) APDU tunnel for operator switching
+ * pqzk_mlkem.h — Round-3 CRYSTALS-Kyber-768 (OQS_KEM_alg_kyber_768) APDU
+ * tunnel for operator switching. This is not FIPS 203 ML-KEM-768
+ * (which would use OQS_KEM_alg_ml_kem_768).
  */
 
 #ifndef PQZK_MLKEM_H

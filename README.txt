@@ -309,6 +309,11 @@ stored state. The CLI switch prototype does not reproduce the full persistent
 per-MNO Merkle/state lifecycle, and operator switching is not part of Claims 1
 through 5.
 
+The operator-switching KEM is round-3 CRYSTALS-Kyber-768
+(OQS_KEM_alg_kyber_768), matching the paper's parameter table. It is not FIPS
+203 ML-KEM-768; the pqzk_mlkem source files keep that name for continuity but
+state this in their headers.
+
 The evaluated artifact executes authentication sessions serially per EID.
 Concurrent outstanding authentication sessions for the same EID are not
 implemented or evaluated.
