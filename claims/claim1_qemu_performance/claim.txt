@@ -39,8 +39,11 @@ computation, place the state directory on tmpfs and compare with the same
 run on disk.
 
 Analytical eUICC projection (separate model, not a measurement): 4.17 ms
-(4.2 ms rounded) dominant-cost projection with W_sec precomputed at 33 MHz
-under the stated cycle/AES assumptions.
+(4.2 ms rounded) dominant-cost projection with W_sec precomputed at 33 MHz.
+Inputs: 71,680 ternary additions at 1 cycle/add (2.172 ms); an AES-CTR mask of
+512 blocks at 77.3 cycles/block (1.199 ms); an AES-CMAC of 213 blocks at
+124 cycles/block (0.800 ms); total 137,670 cycles = 4.172 ms. Recompute with
+projection.py in this directory.
 
 Runtime: <1 min (QEMU ARM64 emulation)
 

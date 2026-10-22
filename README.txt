@@ -290,6 +290,23 @@ The QEMU measurements are software workload measurements under AArch64 emulation
 
 The approximately 4.2 ms eUICC value in the paper is an analytical dominant-cost projection with W_sec precomputed. It is not an end-to-end wall-clock measurement. The projection covers the dominant ternary challenge-response additions and the stated AES allowances. Auxiliary HKDF and KDF operations, challenge hashing, token verification, serialization, and NVM commit are outside that analytical subtotal.
 
+The projection is an operation-count model at a 33 MHz eUICC. Its inputs (the
+optimistic row of the paper's table) are:
+
+  ternary additions   71,680 ops x 1 cycle/op      =  71,680 cycles = 2.172 ms
+  AES-CTR mask        512 blocks x 77.3 cyc/block  =  39,578 cycles = 1.199 ms
+    (8x256 coefficients, 32-bit packed, 8192 B)
+  AES-CMAC            213 blocks x 124 cyc/block   =  26,412 cycles = 0.800 ms
+    (MAC_W plus token verification, ~3,392 B)
+  ------------------------------------------------------------------------
+  total                                            = 137,670 cycles = 4.172 ms
+
+The per-block cycle figures already include data-bus transfer, hardware-engine
+state-machine start-up and key scheduling; they are not pure arithmetic. The
+moderate and conservative rows of the paper's table scale the additions to 2 and
+3 cycles/add and the AES allowance to 2.0 ms (hardware) and 7.5 ms (software).
+The projection can be recomputed with claims/claim1_qemu_performance/projection.py.
+
 The paper's communication sizes use canonical packing with 23 bits per ring coefficient. The Android and JNI reference integration uses 32-bit coefficient containers for implementation convenience. JNI buffer lengths therefore do not represent the paper's canonical wire-size estimate.
 
 9. Prototype limitations
