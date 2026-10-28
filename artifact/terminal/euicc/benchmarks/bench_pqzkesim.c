@@ -328,7 +328,7 @@ static void run_dos_bench(void)
 
     for (int i = 0; i < 10; i++) {
         uint64_t cs_w; uint8_t ks_w[32];
-        PQ_ZK_ErrorCode mrc = PQC_Server_SlidingWindowSync(&srv, &W_sec, MAC_W, 1, &cs_w, &ks_w);
+        PQ_ZK_ErrorCode mrc = PQC_Server_SlidingWindowSync(&srv, &W_sec, MAC_W, 1, &cs_w, ks_w);
         if (mrc != PQ_ZK_SUCCESS || cs_w != st.ctr_local)
             printf("  [warn] MAC_W pre-filter did not match at delta=0\n");
         PQ_ZK_ErrorCode vrc = PQC_VerifyEngine(
@@ -342,7 +342,7 @@ static void run_dos_bench(void)
     for (int i = 0; i < trials; i++) {
         uint64_t cs_w; uint8_t ks_w[32];
         double t0 = get_time_us();
-        PQC_Server_SlidingWindowSync(&srv, &W_sec, MAC_W, 1, &cs_w, &ks_w);
+        PQC_Server_SlidingWindowSync(&srv, &W_sec, MAC_W, 1, &cs_w, ks_w);
         mac_times[i] = get_time_us() - t0;
     }
 

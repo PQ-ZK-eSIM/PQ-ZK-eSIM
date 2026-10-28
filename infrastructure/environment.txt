@@ -1,4 +1,4 @@
-Canonical host: Ubuntu 22.04 LTS (x86_64)
+Canonical host: Ubuntu 22.04 or 24.04 LTS (x86_64)
 CPU: 4+ cores
 RAM: 8 GB or more
 Disk: 25 GB free

@@ -17,7 +17,9 @@ Measured:
   W=32, Delta=32: MAC search about 2.96 ms;
   total in-window latency about 6.8 ms;
   Delta=64: outside-window failure about 3.0 ms (lattice verification skipped);
-  expected MAC-search reference: (W+1) x 71.0 us.
+  expected MAC-search reference: (W+1) x 71.0 us = 2.34 ms. This reference
+  counts one MAC per candidate epoch and excludes the per-epoch key evolution,
+  so it is a lower bound; the measured 2.96 ms includes that key evolution.
 
 Runtime: ~1-2 min
 
@@ -25,4 +27,5 @@ Resources: 1 CPU core, <100 MB RAM, <1 MB disk
 
 Tolerance:
   - success_rate: deterministic (1.0 within window, 0.0 beyond window).
-  - timing: faster passes; slower up to +100% (2x).
+  - Timings: avg_mac_us and avg_total_us must be positive; absolute values are
+    not compared because they depend on the host and its storage.

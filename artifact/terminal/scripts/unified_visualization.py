@@ -105,18 +105,26 @@ def plot_sparse_noise_attack():
     # (ell_2 lower, ell_2 upper, ell_inf, ell_1 lower).
     ax = axes[0]
     colors_a = ['#d62728' if r < 100 else '#2ca02c' for r in rho]
-    bars = ax.bar(rho, df["detection_rate"] * 100, color=colors_a,
+    det = df["detection_rate"].values * 100
+    bars = ax.bar(rho, det, color=colors_a,
                   width=8, alpha=0.85, edgecolor='white', linewidth=2)
-    for bar, v in zip(bars, df["detection_rate"] * 100):
+    # rho = 0, 5 and 10 percent sit close together: keep a label on every bar,
+    # but use a smaller font and staggered heights so they do not overlap.
+    for i, (bar, v) in enumerate(zip(bars, det)):
+        x = round(float(rho[i]), 6)
         vlabel = f'{v:.1f}%' if abs(v - round(v)) > 1e-6 else f'{v:.0f}%'
-        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 2,
-                vlabel, ha='center', va='bottom',
-                fontsize=32, fontweight='bold', color='black')
+        if x in (0.0, 5.0, 10.0):
+            fs, dy = 18, (10 if x == 5.0 else 2)
+        else:
+            fs, dy = 32, 2
+        ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + dy,
+                vlabel, ha='center', va='bottom', fontsize=fs,
+                fontweight='bold', color='black')
     ax.axhline(y=99, color='#1f77b4', linestyle='--', linewidth=3)
     ax.set_xlabel("Sparsification setting ρ (%)", fontsize=42)
     ax.set_ylabel("Norm Rejection Rate (%)", fontsize=42)
     ax.set_title("(A) Attack Detection Rate vs ρ", fontsize=44, pad=5)
-    ax.set_ylim(0, 108)
+    ax.set_ylim(0, 116)
     ax.set_xticks(rho)
     ax.tick_params(axis='both', labelsize=38)
 
@@ -142,7 +150,7 @@ def plot_sparse_noise_attack():
             color='#1f77b4', linewidth=4, markersize=16)
     ax.set_xlabel("Sparsification setting ρ (%)", fontsize=42)
     ax.set_ylabel("Aggregation + Verification Latency (ms)", fontsize=42)
-    ax.set_title("(C) Aggregation + Verification Latency vs ρ", fontsize=44, pad=5)
+    ax.set_title("(C) Aggregation + Verification\nLatency vs ρ", fontsize=44, pad=5)
     ax.set_xticks(rho)
     ax.tick_params(axis='both', labelsize=38)
 

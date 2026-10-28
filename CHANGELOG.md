@@ -8,7 +8,7 @@
   Timings that are non-numeric, `NaN`, `+/-inf`, zero or negative now fail;
   ratio columns must lie in `[0, 1]`; the `Speedup` row is recomputed from the
   two timing rows and compared with the value written in the file instead of
-  being trusted. Checked against the three cases reported by the reviewer
+  being trusted. Checked against three malformed inputs
   (Claim 1 timings set to `-1`; Claim 3 `Speedup` set to a non-numeric string;
   Claim 5 rates set to `NaN`) — all three are now rejected, while the recorded
   reference data still passes.
@@ -16,15 +16,19 @@
   now also collects `sparse_noise_norm_breakdown.csv` into `results/`, and the
   validator checks it. `detection_rate` in the main CSV is the union of the
   four checks (ell_2 lower bound, ell_2 upper bound, ell_infinity, ell_1 lower
-  bound); Figure 7A plots the ell_1 lower-bound rate specifically, which is
-  `l1_low_rate` in the breakdown file. Both the claim text and the README now
-  say so. The breakdown carries no stored reference value, because its
+  bound); Figure 7A plots this union rate (`detection_rate`). The breakdown
+  file records each check separately and carries no stored reference value,
+  because its
   rho = 0.90 row is in the transition band and legitimately varies between
   runs; it is judged against the acceptance rules stated in the claim's
   Tolerance section.
 - **Claim 5 claim text.** `rho` was described as the fraction of zeroed
   coefficients; it is the fraction *retained*. Corrected in the claim text to
   match the code and the README.
+- **KEM naming (documentation).** The operator-switching KEM is round-3
+  CRYSTALS-Kyber-768 (`OQS_KEM_alg_kyber_768`), matching the paper; it is not
+  FIPS 203 ML-KEM-768. The `pqzk_mlkem` source files keep that name but now
+  state this in their headers and in the README.
 - **Claim 2 setup (behavior).** `setup.sh` is self-contained and
   non-interactive: it reuses an existing SageMath when one is usable and
   otherwise bootstraps conda and installs SageMath from conda-forge only

@@ -14,12 +14,15 @@ Comparison rules (from each claim's Tolerance section):
   - "exact"   columns must match exactly (counts, integers).
   - "rate"    columns must match within 1e-3 (0.0/1.0 success/detection)
               and must lie in [0, 1].
-  - "timing"  columns are machine-dependent: a FASTER machine (lower
-              latency) always passes; a slower machine passes up to
-              TIMING_SLOW_TOL (100% slower, i.e. <= 2x). Timings must be
-              positive finite numbers.
-  - "speedup" is recomputed from the two named timing rows and checked
-              against the value written in the file.
+  - "positive" columns must hold finite positive numbers in every row. These
+              are host-dependent latencies: they are validated for
+              plausibility but not compared with the reference, because
+              absolute QEMU timings vary by a factor of several across hosts.
+  - "phase_share" columns are compared as their share of the row total_us,
+              within SHARE_TOL. This is machine-independent: a slower host
+              scales the phases together, so the split is reproducible.
+  - "speedup" is recomputed from the two named timing rows, must exceed the
+              declared floor, and must agree with the value written in the file.
 
 A value that is not a finite number (text, NaN, +/-inf) never passes, and a
 ratio outside [0, 1] is a failure rather than a pass.
@@ -32,10 +35,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 RATE_TOL = 1e-3
-# Asymmetric timing tolerance (QEMU emulation speed varies across machines):
-#   - faster  (got <= expected): always accepted -- a faster host is never a fail
-#   - slower  (got >  expected): accepted up to 100% slower (<= 2x)
-TIMING_SLOW_TOL = 1.0
+# A phase's share of the total may differ from the reference by this much
+# (absolute fraction). Cross-host QEMU timings scale unequally because some
+# phases touch the file-backed state.
+SHARE_TOL = 0.10
 # A "Speedup" row must agree with the ratio recomputed from its two timing
 # rows to within this relative tolerance.
 RATIO_TOL = 0.05
@@ -46,7 +49,7 @@ CLAIMS = {
     "claim1_qemu_performance": {
     "phase_timing_results.csv": {
         "rowcount": True,
-        "mean_timing": [
+        "positive": [
             "lpa_precompute_us",
             "euicc_commit_us",
             "challenge_gen_us",
@@ -55,6 +58,15 @@ CLAIMS = {
             "lpa_aggregate_us",
             "server_verify_us",
             "total_us",
+            ],
+        "phase_share": [
+            "lpa_precompute_us",
+            "euicc_commit_us",
+            "challenge_gen_us",
+            "tee_authtoken_us",
+            "euicc_mask_us",
+            "lpa_aggregate_us",
+            "server_verify_us",
             ],
         },
     },
@@ -68,10 +80,9 @@ CLAIMS = {
     "claim3_dos_early_reject": {
         "dos_results.csv": {
             "key": "test",
-            "timing": ["avg_us"],
-            "skip_timing": ["Speedup"],
+            "positive": ["avg_us"],
             "speedup": {
-                "row": "Speedup", "col": "avg_us", "min": 1.0,
+                "row": "Speedup", "col": "avg_us", "min": 3.0,
                 "fast_row": "MAC_W_Verification",
                 "slow_row": "Full_Lattice_Verification",
             },
@@ -81,7 +92,7 @@ CLAIMS = {
         "sliding_window_resync_results.csv": {
             "key": ["window_size", "sync_depth"],
             "ratio": ["success_rate"],
-            "timing": ["avg_mac_us", "avg_total_us"],
+            "positive": ["avg_mac_us", "avg_total_us"],
         },
     },
     "claim5_sparse_noise": {
@@ -94,14 +105,15 @@ CLAIMS = {
             # [0, 1], and the honest row is held to the declared <= 0.05 rule.
             "range": ["false_reject_rate"],
             "honest_frr": {"rho": 1.0, "col": "false_reject_rate", "max": 0.05},
-            "timing": ["avg_total_us"],
+            "positive": ["avg_total_us"],
             "grid": {"key": "rho",
                      "values": [0.0, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 1.0]},
         },
-        # Per-norm breakdown. Figure 7A plots the ell_1 lower-bound rate, which
-        # is l1_low_rate; detection_rate in the file above is the union of the
-        # ell_2-low, ell_2-high, ell_inf and ell_1 checks. The rho = 0.90 row
-        # sits in the transition band, so only the threshold rule is applied.
+        # Per-norm breakdown. Figure 7A plots the union detection_rate from the
+        # file above (the ell_2-low, ell_2-high, ell_inf and ell_1 checks OR-ed
+        # together); this file records each check separately, and its
+        # l1_low_rate column is held to the same threshold rule. The rho = 0.90
+        # row sits in the transition band, so only the threshold rule applies.
         "sparse_noise_norm_breakdown.csv": {
             "key": "rho",
             "rules_only": True,
@@ -221,20 +233,40 @@ def within_tol(a, b, tol):
     return abs(fa - fb) / denom <= tol
 
 
-def within_timing_tol(expected, got):
-    """Asymmetric timing tolerance (see TIMING_SLOW_TOL).
+def positive_ok(rows, spec, name, ok):
+    """Every cell in these columns must be a finite positive number."""
+    for col in spec.get("positive", []):
+        bad = [r.get(col) for r in rows
+               if num(r.get(col)) is None or num(r.get(col)) <= 0]
+        if bad:
+            print(f"  [{name}] {col} has {len(bad)} non-positive or "
+                  f"non-numeric value(s), e.g. {bad[0]!r}")
+            ok = False
+    return ok
 
-    Both values must be positive finite numbers: a negative or non-numeric
-    latency is a failure, not something that is merely "not slower".
-    """
-    fe, fg = num(expected), num(got)
-    if fe is None or fg is None:
-        return False
-    if fe <= 0 or fg <= 0:
-        return False
-    if fg <= fe:
-        return True                       # faster or equal: always OK
-    return (fg - fe) / fe <= TIMING_SLOW_TOL
+
+def phase_share_ok(exp_rows, res_rows, spec, name, ok):
+    """Compare each phase's share of the row total (machine-independent)."""
+    cols = spec.get("phase_share", [])
+    if not cols:
+        return ok
+    need = cols + ["total_us"]
+    vals = [num(r.get(c)) for r in list(exp_rows) + list(res_rows) for c in need]
+    if any(v is None or v <= 0 for v in vals):
+        return ok          # positive_ok already reported the bad cells
+
+    def share(rows):
+        means = {c: sum(num(r[c]) for r in rows) / len(rows) for c in need}
+        return {c: means[c] / means["total_us"] for c in cols}
+
+    es_all = share(exp_rows)
+    rs_all = share(res_rows)
+    for c in cols:
+        if abs(es_all[c] - rs_all[c]) > SHARE_TOL:
+            print(f"  [{name}] {c} share: expected {es_all[c]:.3f}, got "
+                  f"{rs_all[c]:.3f} (differs by > {int(SHARE_TOL*100)} points)")
+            ok = False
+    return ok
 
 
 def key_of(row, key):
@@ -283,30 +315,11 @@ def compare_file(claim, name, spec):
             return False
 
         ok = True
-        for col in spec.get("mean_timing", []):
-            # Validate every cell, not just the mean: a single negative or
-            # non-numeric latency must fail even if the mean still looks normal.
-            bad = [r.get(col) for r in res_rows
-                   if num(r.get(col)) is None or num(r.get(col)) <= 0]
-            if bad:
-                print(f"  [{name}] {col} has {len(bad)} non-positive or "
-                      f"non-numeric value(s), e.g. {bad[0]!r}")
-                ok = False
-                continue
-
-            exp_mean = sum(num(r[col]) for r in exp_rows) / len(exp_rows)
-            res_mean = sum(num(r[col]) for r in res_rows) / len(res_rows)
-
-            if not within_timing_tol(exp_mean, res_mean):
-                print(
-                    f"  [{name}] mean {col}: "
-                    f"expected {exp_mean:.2f}, got {res_mean:.2f} "
-                    f"(slower by > {int(TIMING_SLOW_TOL*100)}%)"
-                )
-                ok = False
+        ok = positive_ok(res_rows, spec, name, ok)
+        ok = phase_share_ok(exp_rows, res_rows, spec, name, ok)
 
         if ok:
-            print(f"  [{name}] OK (header + {len(res_rows)} rows + phase means)")
+            print(f"  [{name}] OK (header + {len(res_rows)} rows + phase shares)")
         return ok
 
     key = spec["key"]
@@ -337,12 +350,9 @@ def compare_file(claim, name, spec):
                 ok = False
         if spec.get("detection"):
             ok = detection_ok([er, rr], spec, name, ok)
-        for col in spec.get("timing", []):
-            if k in spec.get("skip_timing", []):
-                continue
-            if not within_timing_tol(er[col], rr[col]):
-                print(f"  [{name}] {col} (row {k}) expected {er[col]}, got {rr[col]} (slower by > {int(TIMING_SLOW_TOL*100)}%)")
-                ok = False
+        # Absolute latencies are validated by positive_ok() and are not
+        # compared with the reference: they vary by a factor of several across
+        # hosts. Only the structural checks above are machine-independent.
 
     honest_frr = spec.get("honest_frr")
     if honest_frr:
@@ -387,6 +397,7 @@ def compare_file(claim, name, spec):
                       f"{by_row.get(sp['row'], {}).get(col)!r}, recomputed {ratio:.2f}")
                 ok = False
 
+    ok = positive_ok(res_rows, spec, name, ok)
     ok = grid_ok(res_fields, res_rows, spec, name, ok)
     ok = range_ok(res_rows, spec, name, ok)
 

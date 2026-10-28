@@ -21,9 +21,10 @@ remaining claims run offline.
 
   License      Apache-2.0 (license.txt). Third-party components and their
                licenses are listed in infrastructure/THIRD_PARTY.md.
-  Verified on  Ubuntu 24.04.4 LTS, 2 CPU cores, 3.8 GiB RAM, with gcc 9.5.0,
-               cmake 3.28.3, qemu-aarch64 8.2.2, python3 3.12.3,
-               OpenSSL 3.0.13, liboqs 0.15.0, SageMath 10.8 (conda-forge).
+  Verified on  Ubuntu 24.04.4 LTS, 2 cores of an Intel Core i7-12650H,
+               3.8 GiB RAM, with gcc 13.3.0, cmake 3.28.3, qemu-aarch64 8.2.2,
+               python3 3.12.3, OpenSSL 3.0.13, liboqs 0.15.0,
+               SageMath 10.8 (conda-forge).
 
   Badge evidence
     Available   public repository at a fixed revision, archived for availability;
@@ -288,7 +289,28 @@ The concrete lattice numbers reported in this artifact are known-attack estimate
 
 The QEMU measurements are software workload measurements under AArch64 emulation. They are not measurements from a commercial eUICC or TrustZone device.
 
+The eUICC commit and response/mask phases fsync the NVRAM file inside the timed region, so those two phase times depend on the host storage and a slow disk can dominate the measured total. Placing the state directory on tmpfs separates the computation from storage time; compare a run on tmpfs with the same run on disk to see the difference. Commercial-eUICC NVM latency is not measured.
+
+Absolute latencies are host-dependent, so validate.py does not compare them. Claim 1 is checked by each phase's share of the total, Claim 3 by the recomputed MAC-versus-lattice ratio (it must stay at least 3x), and Claims 4 and 5 require every timing to be a positive number together with the qualitative results. The reference numbers were measured on the host in the "Verified on" line above; on slower hosts the Claim 3 ratio is lower.
+
 The approximately 4.2 ms eUICC value in the paper is an analytical dominant-cost projection with W_sec precomputed. It is not an end-to-end wall-clock measurement. The projection covers the dominant ternary challenge-response additions and the stated AES allowances. Auxiliary HKDF and KDF operations, challenge hashing, token verification, serialization, and NVM commit are outside that analytical subtotal.
+
+The projection is an operation-count model at a 33 MHz eUICC. Its inputs (the
+optimistic row of the paper's table) are:
+
+  ternary additions   71,680 ops x 1 cycle/op      =  71,680 cycles = 2.172 ms
+  AES-CTR mask        512 blocks x 77.3 cyc/block  =  39,578 cycles = 1.199 ms
+    (8x256 coefficients, 32-bit packed, 8192 B)
+  AES-CMAC            213 blocks x 124 cyc/block   =  26,412 cycles = 0.800 ms
+    (MAC_W plus token verification, ~3,392 B)
+  ------------------------------------------------------------------------
+  total                                            = 137,670 cycles = 4.172 ms
+
+The per-block cycle figures already include data-bus transfer, hardware-engine
+state-machine start-up and key scheduling; they are not pure arithmetic. The
+moderate and conservative rows of the paper's table scale the additions to 2 and
+3 cycles/add and the AES allowance to 2.0 ms (hardware) and 7.5 ms (software).
+The projection can be recomputed with claims/claim1_qemu_performance/projection.py.
 
 The paper's communication sizes use canonical packing with 23 bits per ring coefficient. The Android and JNI reference integration uses 32-bit coefficient containers for implementation convenience. JNI buffer lengths therefore do not represent the paper's canonical wire-size estimate.
 
@@ -309,6 +331,11 @@ stored state. The CLI switch prototype does not reproduce the full persistent
 per-MNO Merkle/state lifecycle, and operator switching is not part of Claims 1
 through 5.
 
+The operator-switching KEM is round-3 CRYSTALS-Kyber-768
+(OQS_KEM_alg_kyber_768), matching the paper's parameter table. It is not FIPS
+203 ML-KEM-768; the pqzk_mlkem source files keep that name for continuity but
+state this in their headers.
+
 The evaluated artifact executes authentication sessions serially per EID.
 Concurrent outstanding authentication sessions for the same EID are not
 implemented or evaluated.
@@ -319,7 +346,10 @@ The external network backend is not required for the reported artifact claims. A
 
 The evaluated C, QEMU, and Python components require no private hardware and can be exercised on a suitable Ubuntu x86_64 public compute instance.
 
-If the artifact is submitted from a mutable Git repository during evaluation, the final evaluated version should also be archived in a permanent public repository according to the ACSAC artifact-availability requirements.
+If the artifact is submitted from a mutable Git repository during evaluation, the final evaluated version is also archived in a permanent public repository according to the ACSAC artifact-availability requirements. The evaluated version is archived at Zenodo:
+
+  DOI       10.5281/zenodo.23558777   (concept DOI; always the latest version)
+  Record    https://doi.org/10.5281/zenodo.23558777
 
 The public artifact includes the source code, experiment scripts, expected outputs, documentation, and configuration files needed to exercise the claims described above.
 
