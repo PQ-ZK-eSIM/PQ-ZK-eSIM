@@ -21,9 +21,10 @@ remaining claims run offline.
 
   License      Apache-2.0 (license.txt). Third-party components and their
                licenses are listed in infrastructure/THIRD_PARTY.md.
-  Verified on  Ubuntu 24.04.4 LTS, 2 CPU cores, 3.8 GiB RAM, with gcc 13.3.0,
-               cmake 3.28.3, qemu-aarch64 8.2.2, python3 3.12.3,
-               OpenSSL 3.0.13, liboqs 0.15.0, SageMath 10.8 (conda-forge).
+  Verified on  Ubuntu 24.04.4 LTS, 2 cores of an Intel Core i7-12650H,
+               3.8 GiB RAM, with gcc 13.3.0, cmake 3.28.3, qemu-aarch64 8.2.2,
+               python3 3.12.3, OpenSSL 3.0.13, liboqs 0.15.0,
+               SageMath 10.8 (conda-forge).
 
   Badge evidence
     Available   public repository at a fixed revision, archived for availability;
@@ -289,6 +290,8 @@ The concrete lattice numbers reported in this artifact are known-attack estimate
 The QEMU measurements are software workload measurements under AArch64 emulation. They are not measurements from a commercial eUICC or TrustZone device.
 
 The eUICC commit and response/mask phases fsync the NVRAM file inside the timed region, so those two phase times depend on the host storage and a slow disk can dominate the measured total. Placing the state directory on tmpfs separates the computation from storage time; compare a run on tmpfs with the same run on disk to see the difference. Commercial-eUICC NVM latency is not measured.
+
+Absolute latencies are host-dependent, so validate.py does not compare them. Claim 1 is checked by each phase's share of the total, Claim 3 by the recomputed MAC-versus-lattice ratio (it must stay at least 3x), and Claims 4 and 5 require every timing to be a positive number together with the qualitative results. The reference numbers were measured on the host in the "Verified on" line above (Intel Core i7-12650H); on slower hosts the Claim 3 ratio is lower, about 9-10x on a shared 2-core VM.
 
 The approximately 4.2 ms eUICC value in the paper is an analytical dominant-cost projection with W_sec precomputed. It is not an end-to-end wall-clock measurement. The projection covers the dominant ternary challenge-response additions and the stated AES allowances. Auxiliary HKDF and KDF operations, challenge hashing, token verification, serialization, and NVM commit are outside that analytical subtotal.
 

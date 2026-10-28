@@ -50,7 +50,9 @@ Runtime: <1 min (QEMU ARM64 emulation)
 Resources: 1 CPU core, <100 MB RAM, <10 MB disk
 
 Tolerance:
-  - Latency values: faster passes; slower up to +100% (2x) (QEMU/compiler dependent).
+  - Phase shares: each phase's mean share of total_us must match the reference
+    within 10 percentage points. Absolute latencies are not compared: they
+    depend on the host CPU and storage. Every timing cell must be positive.
   - Deterministic (strict): the eUICC path performs no NTT and no Gaussian
     sampling. This is a code-level property (pqzk_vec_scalar_mul is sparse
     ternary; no NTT function is invoked on the eUICC path), not a timing

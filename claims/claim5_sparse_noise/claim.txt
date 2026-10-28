@@ -38,7 +38,8 @@ Tolerance:
     falls in the transition band. Acceptance: detection_rate >= 0.95 for
     rho <= 0.75, and detection_rate <= 0.05 at rho = 1.0.
   - false_reject_rate: acceptance is <= 0.05 for the honest rho = 1.0 row.
-  - timing: faster passes; slower up to +100% (2x).
+  - Timings: avg_total_us must be positive; absolute values are not compared
+    because they depend on the host.
 
 Notes:
   detection_rate in sparse_noise_attack_results.csv is the union of the four

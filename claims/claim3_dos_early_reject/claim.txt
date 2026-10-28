@@ -22,9 +22,10 @@ Runtime: <1 min
 Resources: 1 CPU core, <100 MB RAM, <1 MB disk
 
 Tolerance:
-  - Deterministic: Speedup > 1 (MAC is strictly cheaper than full lattice
-    verification).
-  - timing (avg_us): faster passes; slower up to +100% (2x).
+  - Deterministic: the recomputed Speedup (Full_Lattice / MAC_W) must be >= 3,
+    i.e. the MAC pre-filter is clearly cheaper than full lattice verification.
+  - Timings: every avg_us must be positive; absolute values are not compared
+    because they depend on the host.
 
 Notes:
   MAC_W_Verification times one epoch of the server sliding-window MAC search:

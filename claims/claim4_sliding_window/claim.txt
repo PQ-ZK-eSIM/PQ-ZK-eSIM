@@ -27,4 +27,5 @@ Resources: 1 CPU core, <100 MB RAM, <1 MB disk
 
 Tolerance:
   - success_rate: deterministic (1.0 within window, 0.0 beyond window).
-  - timing: faster passes; slower up to +100% (2x).
+  - Timings: avg_mac_us and avg_total_us must be positive; absolute values are
+    not compared because they depend on the host and its storage.
